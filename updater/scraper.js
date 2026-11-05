@@ -46,6 +46,15 @@ function sellPrice(cost, P = PRICING) {
   return Math.round((n * 10 + end) * 100) / 100;
 }
 
+// versão pública do catálogo: recalcula o preço com a margem atual e nunca expõe o custo.
+// Peças sem custo (catálogo antigo) mantêm o preço gravado.
+function publicCatalog(catalog) {
+  return {
+    ...catalog,
+    products: catalog.products.map(({ cost, ...p }) => (cost > 0 ? { ...p, price: sellPrice(cost) } : p)),
+  };
+}
+
 async function listing(p) {
   const out = [];
   for (let n = 1; n < 80; n++) {
@@ -151,7 +160,7 @@ async function updateAll(o) {
         const buf = await getBuf(d.img.replace(/-\d+-0\.webp/, '-1024-1024.webp'), d.img);
         await sharp(buf).resize(IMG_W, IMG_W, { fit: 'inside', withoutEnlargement: true }).flatten({ background: '#ffffff' }).webp({ quality: 72 }).toFile(file);
       }
-      products.push({ id, code: flat(d.code), name: flat(d.name), cat: e.cat, sub: flat(e.sub), price: sellPrice(d.cost), peso: flat(d.peso), comprimento: flat(d.comprimento), sizes: d.sizes.map(flat), hasVariants: d.hasVariants, imgSrc: flat(d.img) });
+      products.push({ id, code: flat(d.code), name: flat(d.name), cat: e.cat, sub: flat(e.sub), cost: d.cost, price: sellPrice(d.cost), peso: flat(d.peso), comprimento: flat(d.comprimento), sizes: d.sizes.map(flat), hasVariants: d.hasVariants, imgSrc: flat(d.img) });
     } catch (err) {
       falhas++;
       const old = prevById.get(id);
@@ -175,5 +184,5 @@ async function updateAll(o) {
   return { total: products.length, falhas };
 }
 
-module.exports = { updateAll, sellPrice };
+module.exports = { updateAll, sellPrice, publicCatalog };
 

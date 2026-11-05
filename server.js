@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const cron = require('node-cron');
-const { updateAll } = require('./updater/scraper');
+const { updateAll, publicCatalog } = require('./updater/scraper');
 const site = require('./config/site.json');
 
 const root = __dirname;
@@ -14,7 +14,18 @@ app.disable('x-powered-by');
 
 const catalogPath = () => (fs.existsSync(path.join(dataDir, 'catalog.json')) ? path.join(dataDir, 'catalog.json') : path.join(seedDir, 'catalog.json'));
 
-app.get('/catalog.json', (req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(catalogPath()); });
+// gera o JSON público uma vez e só refaz quando o arquivo do catálogo muda
+let catalogCache = { key: null, json: null };
+function publicCatalogJson() {
+  const file = catalogPath();
+  const key = `${file}:${fs.statSync(file).mtimeMs}`;
+  if (catalogCache.key !== key) {
+    const catalog = JSON.parse(fs.readFileSync(file, 'utf8').replace(/^﻿/, ''));
+    catalogCache = { key, json: JSON.stringify(publicCatalog(catalog)) };
+  }
+  return catalogCache.json;
+}
+app.get('/catalog.json', (req, res) => { res.set('Cache-Control', 'no-cache'); res.type('application/json').send(publicCatalogJson()); });
 app.get('/site.json', (req, res) => res.json({ nome: site.nome, whatsapp: site.whatsapp, sinalPercentual: site.sinalPercentual, textoRestante: site.textoRestante }));
 // fotos: primeiro a pasta de dados (atualizada), depois as que vêm no projeto
 const imgOpts = { maxAge: '30d', immutable: true, fallthrough: true };
