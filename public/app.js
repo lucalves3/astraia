@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const app = $('app'), catNav = $('catNav');

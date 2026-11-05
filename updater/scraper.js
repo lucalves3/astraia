@@ -1,4 +1,4 @@
-﻿// Coleta o catálogo do fornecedor (listagens + página de cada produto), calcula o preço de venda
+// Coleta o catálogo do fornecedor (listagens + página de cada produto), calcula o preço de venda
 // e grava catalog.json + img/*.webp em dataDir. Peças que falharem mantêm os dados da última atualização.
 const fs = require('fs');
 const path = require('path');
