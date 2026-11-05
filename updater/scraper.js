@@ -5,7 +5,16 @@ const path = require('path');
 const crypto = require('crypto');
 const sharp = require('sharp');
 const CATEGORIES = require('../config/categories');
-const PRICING = require('../config/pricing.json');
+const PRICING_BASE = require('../config/pricing.json');
+
+// MARGEM_LUCRO: porcentagem de lucro sobre o custo (100 = 100%). Sem a variável, vale a margem do pricing.json.
+function margemFromEnv(valor, padrao) {
+  if (valor == null || String(valor).trim() === '') return padrao;
+  const pct = Number(String(valor).trim());
+  if (!Number.isFinite(pct) || pct < 0) throw new Error(`MARGEM_LUCRO inválida: "${valor}" (use um número, ex.: 100 para 100%)`);
+  return pct / 100;
+}
+const PRICING = { ...PRICING_BASE, margem: margemFromEnv(process.env.MARGEM_LUCRO, PRICING_BASE.margem) };
 
 const BASE = 'https://veraluiza.com.br';
 const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; AstraiaCatalogo/1.0)' };
